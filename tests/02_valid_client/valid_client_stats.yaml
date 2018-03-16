@@ -1,0 +1,10 @@
+file:
+  /var/run/valid_client.status:
+    exists: true
+    mode: "0600"
+    owner: root
+    group: root
+    filetype: file
+    contains:
+    - "/^TUN\\/TAP read bytes,[2-9]*$/"
+    - "/^TUN\\/TAP write bytes,[2-9]*$/"

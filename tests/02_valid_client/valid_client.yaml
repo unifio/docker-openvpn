@@ -1,0 +1,10 @@
+process:
+  openvpn:
+    running: true
+interface:
+  tun0:
+    exists: true
+command:
+  ping -c 4 -W 1 10.8.0.1:
+    exit-status: 0
+    timeout: 10000

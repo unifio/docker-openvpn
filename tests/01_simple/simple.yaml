@@ -1,0 +1,13 @@
+port:
+  tcp:1194:
+    listening: true
+    ip:
+    - 0.0.0.0
+process:
+  openvpn:
+    running: true
+interface:
+  tun0:
+    exists: true
+    addrs:
+    - 10.8.0.1/32

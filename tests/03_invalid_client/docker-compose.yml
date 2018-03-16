@@ -1,0 +1,39 @@
+version: "2"
+
+services:
+  vpn-server:
+    image: unifio/openvpn:candidate
+    environment:
+      - OPENVPN_S3_PULL_CERTS=false
+      - OPENVPN_TLS_ENABLE=false
+      - OPENVPN_COMPRESS_ALGORITHM=lzo
+      - OPENVPN_KEY_DHSIZE=1024
+    volumes:
+      - "${TEMPLATE_DIR}/test_certs:/etc/openvpn/keys"
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - "/dev/net/tun"
+    command:
+      - /start_server.sh
+
+  invalid_client:
+    image: unifio/openvpn:candidate
+    environment:
+      - OPENVPN_S3_PULL_CERTS=false
+      - OPENVPN_TLS_ENABLE=false
+      - OPENVPN_COMPRESS_ALGORITHM=lzo
+      - OPENVPN_KEY_DHSIZE=1024
+    volumes:
+      - "${TEMPLATE_DIR}/test_certs:/etc/openvpn/keys"
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - "/dev/net/tun"
+    command:
+      - /opt/tests/03_invalid_client/invalid_client_connect.sh
+      #- /bin/bash
+    #stdin_open: true
+    #tty: true
+
+

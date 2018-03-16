@@ -1,0 +1,130 @@
+{
+  "variables": {
+    "description": "Unif.io docker image for OpenVPN",
+    "version": "latest",
+    "openvpn_version": "2.4.5",
+    "confd_version": "0.15.0",
+    "goss_version": "0.3.5",
+    "compose_tests_project_name": "test"
+  },
+  "description": "{{ user `description` }} - {{ user `version` }}",
+  "builders": [
+    {
+      "type": "docker",
+      "image": "debian:9-slim",
+      "commit": true,
+      "changes": [
+        "LABEL version={{ user `version` }}",
+        "LABEL maintainer=<support@unif.io>",
+        "LABEL append_config=/etc/openvpn/server-append.conf",
+        "ENV OPENVPN_COMPRESS_ALGORITHM lz4",
+        "ENV OPENVPN_COMPRESS_ENABLE true",
+        "ENV OPENVPN_CONFIG_BACKEND env",
+        "ENV OPENVPN_DOMAINNAME vpn.example.com",
+        "ENV OPENVPN_KEY_DHSIZE 4096",
+        "ENV OPENVPN_LOGLEVEL 3",
+        "ENV OPENVPN_MAXCLIENTS 25",
+        "ENV OPENVPN_PROCESS_GROUP nogroup",
+        "ENV OPENVPN_PROCESS_USER nobody",
+        "ENV OPENVPN_PROTOCOL tcp",
+        "ENV OPENVPN_S3_CERT_PATH \"\"",
+        "ENV OPENVPN_S3_PULL_CERTS false",
+        "ENV OPENVPN_SERVER_IPRANGE 10.8.0.0 255.255.255.0",
+        "ENV OPENVPN_TLS_ENABLE true",
+        "EXPOSE 1194/tcp",
+        "HEALTHCHECK NONE",
+        "VOLUME /etc/openvpn/keys/",
+        "VOLUME /var/run/openvpn/",
+        "WORKDIR /etc/openvpn"
+      ]
+    }
+  ],
+  "provisioners": [
+    {
+      "type": "shell",
+      "scripts": [
+        "{{ template_dir }}/scripts/setup.sh",
+        "{{ template_dir }}/scripts/install_openvpn.sh",
+        "{{ template_dir }}/scripts/setup_testing.sh",
+        "{{ template_dir }}/scripts/teardown.sh"
+      ],
+      "environment_vars": [
+        "CONFD_VERSION={{ user `confd_version` }}",
+        "OPENVPN_VERSION={{ user `openvpn_version` }}",
+        "GOSS_VERSION={{ user `goss_version` }}"
+      ]
+    },
+    {
+      "type": "file",
+      "source": "{{ template_dir }}/files/etc/",
+      "destination": "/etc"
+    },
+    {
+      "type": "file",
+      "source": "{{ template_dir }}/files/root/",
+      "destination": "/root"
+    },
+    {
+      "type": "file",
+      "source": "{{ template_dir }}/tests/",
+      "destination": "/opt/tests"
+    },
+    {
+      "type": "shell",
+      "inline": [
+        "chmod +x /root/*.sh",
+        "mv /root/*.sh /"
+      ]
+    }
+  ],
+  "post-processors": [
+    [
+      {
+        "type": "docker-tag",
+        "repository": "unifio/openvpn",
+        "tag": "candidate",
+        "keep_input_artifact": true
+      },
+      {
+        "type": "shell-local",
+        "script": "{{ template_dir }}/tests/01_simple.sh",
+        "environment_vars": [
+          "TEMPLATE_DIR={{ template_dir }}"
+        ]
+      },
+      {
+        "type": "shell-local",
+        "inline": [
+          "docker-compose -f {{ template_dir }}/tests/02_valid_client/docker-compose.yml down",
+          "docker-compose -f {{ template_dir }}/tests/02_valid_client/docker-compose.yml up -d vpn-server",
+          "docker-compose -f {{ template_dir }}/tests/02_valid_client/docker-compose.yml up --exit-code-from valid_client valid_client",
+          "docker-compose -f {{ template_dir }}/tests/02_valid_client/docker-compose.yml down"
+        ],
+        "environment_vars": [
+          "TEMPLATE_DIR={{ template_dir }}",
+          "COMPOSE_PROJECT_NAME={{ user `compose_tests_project_name` }}"
+        ]
+      },
+      {
+        "type": "shell-local",
+        "inline": [
+          "docker-compose -f {{ template_dir }}/tests/03_invalid_client/docker-compose.yml down",
+          "docker-compose -f {{ template_dir }}/tests/03_invalid_client/docker-compose.yml up -d vpn-server",
+          "docker-compose -f {{ template_dir }}/tests/03_invalid_client/docker-compose.yml up --exit-code-from invalid_client invalid_client",
+          "docker-compose -f {{ template_dir }}/tests/03_invalid_client/docker-compose.yml down"
+        ],
+        "environment_vars": [
+          "TEMPLATE_DIR={{ template_dir }}",
+          "COMPOSE_PROJECT_NAME={{ user `compose_tests_project_name` }}"
+        ]
+      },
+      {
+        "type": "shell-local",
+        "inline": [
+          "docker tag unifio/openvpn:candidate unifio/openvpn:{{ user `version` }}",
+          "docker images unifio/openvpn"
+        ]
+      }
+    ]
+  ]
+}
