@@ -1,0 +1,38 @@
+version: 2
+
+jobs:
+  build:
+    docker:
+      - image: circleci/ruby
+    environment:
+      - DOCKER_OPENVPN_VERSION: 0.0.1
+      - DOCKER_IMAGE: 'unifio/openvpn'
+    steps:
+      - checkout
+
+# Build is not complicated enough to warrent a workflow, and with some of the
+# features not ported over, going to default to the single "job"
+# https://discuss.circleci.com/t/only-notify-for-some-branches/10244/9
+#
+#workflows:
+#  version: 2
+#
+#  some_flow:
+#    jobs:
+#      - build
+#      - test:
+#          requires:
+#            - build
+#    - deploy:
+#        requires:
+#          - test
+#        filters:
+#          branches:
+#            only:
+#              - master
+experimental:
+  notify:
+    branches:
+      only:
+        - master
+
