@@ -2,13 +2,44 @@ version: 2
 
 jobs:
   build:
-    docker:
-      - image: circleci/ruby
+    machine: true
     environment:
       - DOCKER_OPENVPN_VERSION: 0.0.1
       - DOCKER_IMAGE: 'unifio/openvpn'
+      - PACKER_VERSION: 1.2.2
     steps:
       - checkout
+      - run:
+          name: "Setup cache key"
+          command: echo $PACKER_VERSION > /tmp/packer_version
+      - restore_cache:
+          keys:
+            - packer-{{ checksum "/tmp/packer_version" }}
+      - run:
+          name: "Setup packer"
+          command: |
+            if [ -f /tmp/packer/packer ]; then
+              sudo cp /tmp/packer/packer /usr/local/bin
+            else
+              mkdir -p /tmp/packer
+              curl -fsSL "https://releases.hashicorp.com/packer/${PACKER_VERSION}/packer_${PACKER_VERSION}_linux_amd64.zip" -o /tmp/packer/packer.zip
+              unzip /tmp/packer/packer.zip -d /tmp/packer
+              chmod +x /tmp/packer/packer
+              sudo cp /tmp/packer/packer /usr/local/bin
+              rm /tmp/packer/packer.zip
+            fi
+      - run:
+          name: "Test: is packer installed"
+          command: packer --version
+      - run: docker --version
+      - run:
+          name: "packer build docker_debian_9.json"
+          command: "packer build docker_debian_9.json"
+      - save_cache:
+          key: packer-{{ checksum "/tmp/packer_version" }}
+          paths:
+            - /tmp/packer
+
 
 # Build is not complicated enough to warrent a workflow, and with some of the
 # features not ported over, going to default to the single "job"
