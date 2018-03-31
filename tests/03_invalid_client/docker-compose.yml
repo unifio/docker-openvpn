@@ -2,7 +2,7 @@ version: "2"
 
 services:
   vpn-server:
-    image: unifio/openvpn:candidate
+    image: "${DOCKER_REPOSITORY}:candidate"
     environment:
       - OPENVPN_S3_PULL_CERTS=false
       - OPENVPN_TLS_ENABLE=false
@@ -18,7 +18,7 @@ services:
       - /start_server.sh
 
   invalid_client:
-    image: unifio/openvpn:candidate
+    image: "${DOCKER_REPOSITORY}:candidate"
     environment:
       - OPENVPN_S3_PULL_CERTS=false
       - OPENVPN_TLS_ENABLE=false

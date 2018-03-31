@@ -1,0 +1,6 @@
+{
+  "version": "0.0.1",
+  "docker_repository": "unifio/openvpn",
+  "tag_latest": "true",
+  "push_tags": "true"
+}

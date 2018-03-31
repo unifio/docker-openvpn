@@ -5,7 +5,10 @@
     "openvpn_version": "2.4.5",
     "confd_version": "0.15.0",
     "goss_version": "0.3.5",
-    "compose_tests_project_name": "test"
+    "compose_tests_project_name": "test",
+    "docker_repository": "tmp/openvpn",
+    "tag_latest": "false",
+    "push_tags": "false"
   },
   "description": "{{ user `description` }} - {{ user `version` }}",
   "builders": [
@@ -81,7 +84,7 @@
     [
       {
         "type": "docker-tag",
-        "repository": "unifio/openvpn",
+        "repository": "{{ user `docker_repository` }}",
         "tag": "candidate",
         "keep_input_artifact": true
       },
@@ -89,6 +92,7 @@
         "type": "shell-local",
         "script": "{{ template_dir }}/tests/01_simple.sh",
         "environment_vars": [
+          "DOCKER_REPOSITORY={{ user `docker_repository` }}",
           "TEMPLATE_DIR={{ template_dir }}"
         ]
       },
@@ -101,8 +105,9 @@
           "docker-compose -f {{ template_dir }}/tests/02_valid_client/docker-compose.yml down"
         ],
         "environment_vars": [
-          "TEMPLATE_DIR={{ template_dir }}",
-          "COMPOSE_PROJECT_NAME={{ user `compose_tests_project_name` }}"
+          "COMPOSE_PROJECT_NAME={{ user `compose_tests_project_name` }}",
+          "DOCKER_REPOSITORY={{ user `docker_repository` }}",
+          "TEMPLATE_DIR={{ template_dir }}"
         ]
       },
       {
@@ -114,15 +119,20 @@
           "docker-compose -f {{ template_dir }}/tests/03_invalid_client/docker-compose.yml down"
         ],
         "environment_vars": [
-          "TEMPLATE_DIR={{ template_dir }}",
-          "COMPOSE_PROJECT_NAME={{ user `compose_tests_project_name` }}"
+          "COMPOSE_PROJECT_NAME={{ user `compose_tests_project_name` }}",
+          "DOCKER_REPOSITORY={{ user `docker_repository` }}",
+          "TEMPLATE_DIR={{ template_dir }}"
         ]
       },
       {
         "type": "shell-local",
-        "inline": [
-          "docker tag unifio/openvpn:candidate unifio/openvpn:{{ user `version` }}",
-          "docker images unifio/openvpn"
+        "script": "{{ template_dir }}/scripts/postprocessing_tag_and_push.sh",
+        "environment_vars": [
+          "DOCKER_REPOSITORY={{ user `docker_repository` }}",
+          "OPENVPN_VERSION={{ user `openvpn_version` }}",
+          "PUSH_TAGS={{ user `push_tags` }}",
+          "TAG_LATEST={{ user `tag_latest` }}",
+          "VERSION={{ user `version` }}"
         ]
       }
     ]

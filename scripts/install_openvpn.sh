@@ -38,11 +38,3 @@ chmod +x /usr/local/bin/confd
 
 logger "Installing awscli"
 apt-get -y install awscli
-
-#logger "Installing openvpn-cert-generator pip package"
-#apt-get -y install python python-pip git python-jinja2
-#pip install git+https://github.com/unifio/openvpn-cert-generator.git
-
-#touch index.txt
-# echo 01 > serial
-# KEY_DIR="/tmp" S3_CERT_ROOT_PATH="" KEY_SIZE=1024 openvpn-cert-generator

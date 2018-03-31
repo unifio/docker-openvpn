@@ -34,7 +34,12 @@ jobs:
       - run: docker --version
       - run:
           name: "packer build docker_debian_9.json"
-          command: "packer build docker_debian_9.json"
+          command: |
+            if [ "$CIRCLE_BRANCH" = "master" ]; then
+              packer build -var-file=packer_vars/prod.json docker_debian_9.json
+            else
+              packer build docker_debian_9.json
+            fi
       - save_cache:
           key: packer-{{ checksum "/tmp/packer_version" }}
           paths:

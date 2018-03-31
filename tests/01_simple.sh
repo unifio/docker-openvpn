@@ -11,6 +11,6 @@ docker run \
   --cap-add=NET_ADMIN \
   --device=/dev/net/tun \
   -v ${TEMPLATE_DIR}/test_certs/:/etc/openvpn/keys/ \
-  unifio/openvpn:candidate \
+  ${DOCKER_REPOSITORY}:candidate \
   /opt/tests/01_simple/simple.sh
 
